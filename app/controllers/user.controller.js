@@ -13,8 +13,6 @@ exports.create = (req, res) => {
   const user = new User({
     name: req.body.name,
     email: req.body.email,
-    phone: req.body.phone,
-    birthday: req.body.birthday,
     password: req.body.password,
   });
 
@@ -57,3 +55,63 @@ exports.findOne = (req, res) => {
     } else res.send(data);
   });
 };
+
+// Delete a User with the specified id in the request
+exports.delete = (req, res) => {
+  User.remove(req.params.id, (err, data) => {
+    if (err) {
+      if (err.kind === "not_found") {
+        res.status(404).send({
+          message: `Not found User with id ${req.params.id}.`
+        });
+      } else {
+        res.status(500).send({
+          message: "Could not delete User with id " + req.params.id
+        });
+      }
+    } else res.send({ message: `User was deleted successfully!` });
+  });
+};
+
+// Update a Tutorial identified by the id in the request
+exports.update = (req, res) => {
+  // Validate Request
+  if (!req.body) {
+    res.status(400).send({
+      message: "Content can not be empty!"
+    });
+  }
+
+  console.log(req.body);
+
+  User.updateById(
+    req.params.id,
+    new User(req.body),
+    (err, data) => {
+      if (err) {
+        if (err.kind === "not_found") {
+          res.status(404).send({
+            message: `Not found User with id ${req.params.id}.`
+          });
+        } else {
+          res.status(500).send({
+            message: "Error updating User with id " + req.params.id
+          });
+        }
+      } else res.send(data);
+    }
+  );
+};
+
+//Login user
+exports.login = (req,res) => {
+  //Tương tác với CSDL
+  User.login(req.body.email, req.body.password, (key) => {
+    if (key.status = true) {
+      res.json({message: key.message, success: true})
+    } else {
+      res.json({message: key.message, success: false})
+    }
+  })
+
+}

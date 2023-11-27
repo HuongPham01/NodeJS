@@ -4,8 +4,6 @@ const sql = require("./db.js");
 const User = function (user) {
   this.name = user.name;
   this.email = user.email;
-  this.phone = user.phone;
-  this.birthday = user.birthday;
   this.password = user.password;
 };
 
@@ -59,4 +57,71 @@ User.getAll = (result) => {
     result(null, res);
   });
 };
+
+User.remove = (id, result) => {
+  sql.query("DELETE FROM Users WHERE id = ?", id, (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+      result(null, err);
+      return;
+    }
+
+    if (res.affectedRows == 0) {
+      // not found User with the id
+      result({ kind: "not_found" }, null);
+      return;
+    }
+
+    console.log("deleted User with id: ", id);
+    result(null, res);
+  });
+};
+
+User.updateById = (id, user, result) => {
+  sql.query(
+    "UPDATE users SET name = ?, password = ?, email= ? WHERE id = ?",
+    [user.name, user.password, user.email, id],
+    (err, res) => {
+      if (err) {
+        console.log("error: ", err);
+        result(null, err);
+        return;
+      }
+
+      if (res.affectedRows == 0) {
+        // not found User with the id
+        result({ kind: "not_found" }, null);
+        return;
+      }
+
+      console.log("updated user: ", { id: id, ...user });
+      result(null, { id: id, ...user });
+    }
+  );
+};
+
+//Login
+User.login = (email, password, callback) => {
+  console.log("model email: ", email)
+  console.log("model password: ", password)
+  sql.query(
+    "SELECT * FROM users WHERE email = ? AND password = ?",
+    [email, password],
+    (err, res) => {
+      console.log(res)
+      if (err) {
+        console.log("error: ", err);
+        callback(null, err);
+        return;
+      }
+
+      if (res.length > 0) {
+        callback({message: "Đăng nhập thành công!!!", status: true})
+      } else {
+        callback({message: "Đăng nhập thất bại!!!", status: false})
+      }
+    }
+  );
+}
+
 module.exports = User;
