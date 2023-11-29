@@ -3,7 +3,7 @@ module.exports = (app) => {
 
   var router = require("express").Router();
 
-  // Create a new User
+  // Create a new User/signup user
   router.post("/", users.create);
 
   // Retrieve all Users
@@ -23,6 +23,7 @@ module.exports = (app) => {
 
   //login user
   router.post("/login", users.login);
+
 
   app.use("/api/users", router);
 };

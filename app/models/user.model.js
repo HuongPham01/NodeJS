@@ -1,4 +1,5 @@
 const sql = require("./db.js");
+const bcrypt = require("bcrypt");
 
 // constructor
 const User = function (user) {
@@ -102,26 +103,35 @@ User.updateById = (id, user, result) => {
 
 //Login
 User.login = (email, password, callback) => {
-  console.log("model email: ", email)
-  console.log("model password: ", password)
-  sql.query(
-    "SELECT * FROM users WHERE email = ? AND password = ?",
-    [email, password],
-    (err, res) => {
-      console.log(res)
-      if (err) {
-        console.log("error: ", err);
-        callback(null, err);
-        return;
-      }
+  // console.log("model email: ", email);
+  // console.log("model password: ", password);
+  sql.query("SELECT * FROM users WHERE email = ?", [email], (err, res) => {
+    console.log('Dữ liệu sau khi tìm thấy email là: ', res[0].password);
+    if (res.length > 0) {
+      // So sánh mật khẩu đã nhập với 'hash' trong cơ sở dữ liệu
+      const plainTextPassword = password;
+      const hashedPasswordFromDatabase = res[0].password;
 
-      if (res.length > 0) {
-        callback({message: "Đăng nhập thành công!!!", status: true})
-      } else {
-        callback({message: "Đăng nhập thất bại!!!", status: false})
-      }
+      bcrypt.compare(
+        plainTextPassword,
+        hashedPasswordFromDatabase,
+        function (err, result) {
+          if (result) {
+            callback({ message: "Đăng nhập thành công!!!", status: true });
+          } else {
+            callback({ message: "Đăng nhập thất bại!!!", status: false });
+          }
+        }
+      );
+    } else {
+      callback({ message: "Tài khoản không tồn tại!!!", status: false });
     }
-  );
-}
+    if (err) {
+      console.log("error: ", err);
+      callback(null, err);
+      return;
+    }
+  });
+};
 
 module.exports = User;
