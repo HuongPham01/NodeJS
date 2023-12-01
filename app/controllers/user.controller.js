@@ -1,8 +1,9 @@
 const User = require("../models/user.model.js");
+const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
 
-// Create and Save a new User
+// Create a new User
 exports.create = (req, res) => {
   // Validate request
   if (!req.body) {
@@ -11,7 +12,7 @@ exports.create = (req, res) => {
     });
   }
 
-  // Tạo salt và băm mật khẩu
+  // Create salt and encoded password
   bcrypt.genSalt(saltRounds, function (err, salt) {
     bcrypt.hash(req.body.password, salt, function (err, hash) {
       // Lưu giữ 'hash' vào cơ sở dữ liệu
@@ -32,12 +33,11 @@ exports.create = (req, res) => {
       });
     });
   });
-
 };
 
-// Retrieve all Users from the database (with condition).
+// Retrieve all Users
 exports.findAll = (req, res) => {
-  // const email = req.query.email;
+  const email = req.query.email;
 
   User.getAll((err, data) => {
     if (err)
@@ -48,7 +48,7 @@ exports.findAll = (req, res) => {
   });
 };
 
-// Find a single User by Id
+// Find a User by Id
 exports.findOne = (req, res) => {
   User.findById(req.params.id, (err, data) => {
     if (err) {
@@ -82,7 +82,7 @@ exports.delete = (req, res) => {
   });
 };
 
-// Update a Tutorial identified by the id in the request
+// Update a User
 exports.update = (req, res) => {
   // Validate Request
   if (!req.body) {
@@ -108,12 +108,43 @@ exports.update = (req, res) => {
   });
 };
 
-//Login user
+// CREATE JWT
+const createJWT = (user, expires_in) => {
+  console.log(user);
+  const jwt = require("jsonwebtoken");
+
+  // Payload (dữ liệu chứa trong JWT)
+  const payload = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    // role: "admin"
+  };
+
+  // Secret key để ký và xác minh JWT
+  const secretKey = "JWT_secret_key";
+
+  // Create  access token
+  const token = jwt.sign(payload, secretKey, { expiresIn: expires_in }); // expiresIn là tùy chọn, xác định thời gian hết hạn của token
+
+  console.log("JWT:", token);
+  return token;
+};
+
+//LOGIN USER
 exports.login = (req, res) => {
   //Tương tác với CSDL
   User.login(req.body.email, req.body.password, (key) => {
-    if ((key.status === true)) {
-      res.json({ message: key.message, success: true });
+    if (key.status === true) {
+      //call function create jwt
+      var access_token = createJWT(key.data, "1m");
+      var refresh_token = createJWT(key.data, "7d");
+      res.json({
+        message: key.message,
+        success: true,
+        accessToken: access_token,
+        refreshToken: refresh_token,
+      });
     } else {
       res.json({ message: key.message, success: false });
     }
