@@ -118,7 +118,7 @@ const createJWT = (user, expires_in) => {
     id: user.id,
     name: user.name,
     email: user.email,
-    // role: "admin"
+    role: user.role,
   };
 
   // Secret key để ký và xác minh JWT
@@ -137,7 +137,7 @@ exports.login = (req, res) => {
   User.login(req.body.email, req.body.password, (key) => {
     if (key.status === true) {
       //call function create jwt
-      var access_token = createJWT(key.data, "1m");
+      var access_token = createJWT(key.data, "5m");
       var refresh_token = createJWT(key.data, "7d");
       res.json({
         message: key.message,

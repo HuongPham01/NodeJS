@@ -9,7 +9,7 @@ const createJWT = (user, expires_in) => {
     id: user.id,
     name: user.name,
     email: user.email,
-    // role: "admin"
+    role: user.role,
   };
 
   // Secret key để ký và xác minh JWT
@@ -38,7 +38,7 @@ const authMiddleware = (req, res, next) => {
             res.send("Have error: " + err.message);
           } else {
             console.log("Token is valid:", decoded);
-            const newAccessToken = createJWT(decoded, "1m");
+            const newAccessToken = createJWT(decoded, "5m");
             //set new header when has new access token
             res.setHeader("authorization", "Bearer " + newAccessToken);
             next();

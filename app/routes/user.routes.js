@@ -1,5 +1,7 @@
 const authMiddleware = require("../middlewares/auth.middleware");
+const permissionMiddleware = require("../middlewares/permission.middleware");
 const users = require("../controllers/user.controller");
+var router = require("express").Router();
 
 module.exports = (app) => {
   app.use(function (req, res, next) {
@@ -9,22 +11,21 @@ module.exports = (app) => {
     );
     next();
   });
-  var router = require("express").Router();
 
   // Create a new User/signup user
-  router.post("/", users.create);
+  router.post("/", permissionMiddleware(["admin"]), users.create);
 
   // Retrieve all Users
   router.get("/", authMiddleware, users.findAll);
 
   // Retrieve a single User with id
-  router.get("/:id", users.findOne);
+  router.get("/:id", permissionMiddleware(["admin"], ["user"]), users.findOne);
 
   // Update a User with id
-  router.put("/:id", users.update);
+  router.put("/:id", permissionMiddleware(["admin"]), users.update);
 
   // Delete a User with id
-  router.delete("/:id", users.delete);
+  router.delete("/:id", permissionMiddleware(["admin"]), users.delete);
 
   // Delete all Users
   // router.delete("/", users.deleteAll);
