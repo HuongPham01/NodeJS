@@ -11,19 +11,19 @@ module.exports = (app) => {
   var router = require("express").Router();
 
   // Create a new product/signup product
-  router.post("/", products.create);
+  router.post("/create", products.create);
 
   // Retrieve all products
-  router.get("/", products.findAll);
+  router.get("/", products.getAllProducts);
 
   // Retrieve a single product with id
   router.get("/:id", products.findOne);
 
   // Update a product with id
-  router.put("/:id", products.update);
+  router.put("/update/:id", products.update);
 
   // Delete a product with id
-  router.delete("/:id", products.delete);
+  router.delete("/delete/:id", products.delete);
 
   // Delete all products
   // router.delete("/", products.deleteAll);

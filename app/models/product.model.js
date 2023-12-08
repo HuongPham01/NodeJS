@@ -1,31 +1,33 @@
 const sql = require("./db.js");
-const bcrypt = require("bcrypt");
 
 // Constructor
-const User = function (user) {
-  this.name = user.name;
-  this.email = user.email;
-  this.password = user.password;
+const Product = function (product) {
+  this.name = product.name;
+  this.description = product.description;
+  this.size = product.size;
+  this.color = product.color;
+  this.price = product.price;
+  this.quantity = product.quantity;
 };
 
-//Create
+//Create Product
 
-User.create = (newUser, result) => {
-  sql.query("INSERT INTO users SET ?", newUser, (err, res) => {
+Product.create = (newProduct, result) => {
+  sql.query("INSERT INTO Products SET ?", newProduct, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
       return;
     }
 
-    console.log("created user: ", { id: res.insertId, ...newUser });
-    result(null, { id: res.insertId, ...newUser });
+    console.log("created Product: ", { id: res.insertId, ...newProduct });
+    result(null, { id: res.insertId, ...newProduct });
   });
 };
 
 //FindOne
-User.findById = (id, result) => {
-  sql.query(`SELECT * FROM users WHERE id = ${id}`, (err, res) => {
+Product.findById = (id, result) => {
+  sql.query(`SELECT * FROM Products WHERE id = ?`, [id], (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -33,39 +35,87 @@ User.findById = (id, result) => {
     }
 
     if (res.length) {
-      console.log("found user: ", res[0]);
+      console.log("found Product: ", res[0]);
       result(null, res[0]);
       return;
     }
 
-    // not found user with the id
+    // not found Product with the id
     result({ kind: "not_found" }, null);
   });
 };
 
 //FindAll
-User.getAll = (result) => {
-  let query = "SELECT * FROM users";
+// Product.getAll = (result) => {
+//   let query = "SELECT * FROM Products";
 
-  // if (email) {
-  //   query += ` WHERE email LIKE '%${email}%'`;
-  // }
+//   sql.query(query, (err, res) => {
+//     if (err) {
+//       result(null, err);
+//       return;
+//     }
+//     // console.log("Products: ", res);
+//     result(null, res);
+//   });
+// };
 
-  sql.query(query, (err, res) => {
+// // Pagination
+// Product.pagination = (limit, offset) => {
+//   return new Promise((resolve, reject) => {
+//     sql.query(
+//       "SELECT * FROM products LIMIT ?, ?", // Use placeholders for limit and offset
+//       [offset, limit], // Pass offset and limit as parameters
+//       (err, results) => {
+//         if (err) {
+//           console.error(err);
+//           reject(err);
+//         } else {
+//           resolve(results);
+//         }
+//       }
+//     );
+//   });
+// };
+
+// Combined Model Function
+Product.getAllAndPaginate = (options, result) => {
+  let query = "SELECT * FROM products";
+
+  if (options.limit && options.offset !== null) {
+    // Paginated query
+    query += " LIMIT ? OFFSET ?";
+  }
+
+  const params =
+    options.limit && options.offset !== null
+      ? [options.limit, options.offset]
+      : [];
+
+  sql.query(query, params, (err, res) => {
     if (err) {
-      // console.log("error: ", err);
       result(null, err);
       return;
     }
 
-    // console.log("users: ", res);
+    result(null, res);
+  });
+};
+
+Product.getAll = (result) => {
+  let query = "SELECT * FROM products";
+
+  sql.query(query, (err, res) => {
+    if (err) {
+      result(err, null);
+      return;
+    }
     result(null, res);
   });
 };
 
 //Delete by Id
-User.remove = (id, result) => {
-  sql.query("DELETE FROM Users WHERE id = ?", id, (err, res) => {
+Product.remove = (id, result) => {
+  sql.query("DELETE FROM Products WHERE id = ?", id, (err, res) => {
     if (err) {
       console.log("error: ", err);
       result(null, err);
@@ -73,21 +123,29 @@ User.remove = (id, result) => {
     }
 
     if (res.affectedRows == 0) {
-      // not found User with the id
+      // not found Product with the id
       result({ kind: "not_found" }, null);
       return;
     }
 
-    console.log("deleted User with id: ", id);
+    console.log("deleted Product with id: ", id);
     result(null, res);
   });
 };
 
 //Update
-User.updateById = (id, user, result) => {
+Product.updateById = (id, product, result) => {
   sql.query(
-    "UPDATE users SET name = ?, password = ?, email= ? WHERE id = ?",
-    [user.name, user.password, user.email, id],
+    "UPDATE products SET name = ?, description = ?, size= ?, color= ?, price= ?, quantity= ? WHERE id = ?",
+    [
+      product.name,
+      product.description,
+      product.size,
+      product.color,
+      product.price,
+      product.quantity,
+      id,
+    ],
     (err, res) => {
       if (err) {
         console.log("error: ", err);
@@ -96,53 +154,15 @@ User.updateById = (id, user, result) => {
       }
 
       if (res.affectedRows == 0) {
-        // not found User with the id
+        // not found product with the id
         result({ kind: "not_found" }, null);
         return;
       }
 
-      console.log("updated user: ", { id: id, ...user });
-      result(null, { id: id, ...user });
+      console.log("updated product: ", { id: id, ...product });
+      result(null, { id: id, ...product });
     }
   );
 };
 
-//LOGIN
-User.login = (email, password, callback) => {
-  // console.log("model email: ", email);
-  // console.log("model password: ", password);
-  sql.query("SELECT * FROM users WHERE email = ?", [email], (err, res) => {
-    console.log("Dữ liệu sau khi tìm thấy email là: ", res[0].password);
-    if (res.length > 0) {
-      // So sánh mật khẩu đã nhập với 'hash' trong cơ sở dữ liệu
-      const plainTextPassword = password;
-      const hashedPasswordFromDatabase = res[0].password;
-      bcrypt.compare(
-        plainTextPassword,
-        hashedPasswordFromDatabase,
-        function (err, result) {
-          if (result) {
-            var userNoPassword = res[0];
-            delete userNoPassword.password;
-            callback({
-              message: "Đăng nhập thành công!!!",
-              status: true,
-              data: userNoPassword,
-            });
-          } else {
-            callback({ message: "Đăng nhập thất bại!!!", status: false });
-          }
-        }
-      );
-    } else {
-      callback({ message: "Tài khoản không tồn tại!!!", status: false });
-    }
-    if (err) {
-      console.log("error: ", err);
-      callback(null, err);
-      return;
-    }
-  });
-};
-
-module.exports = User;
+module.exports = Product;

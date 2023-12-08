@@ -1,35 +1,24 @@
 // import .env
-require("dotenv").config();
+// require("dotenv").config();
 // express
 const express = require("express");
-// const bodyParser = require("body-parser"); /* deprecated */
-const cors = require("cors");
-
+// const bodyParser = require("body-parser");
+const multer = require("multer");
 const app = express();
 
-var corsOptions = {
-  origin: "*",
-};
+app.use(express.json());
 
-// app.use(cors(corsOptions));
-
-// parse requests of content-type - application/json
-app.use(express.json()); /* bodyParser.json() is deprecated */
-
-// parse requests of content-type - application/x-www-form-urlencoded
-app.use(
-  express.urlencoded({ extended: true })
-); /* bodyParser.urlencoded() is deprecated */
+app.use(express.urlencoded({ extended: true }));
 
 // simple route
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to my project." });
 });
 
-//require("./app/routes/tutorial.routes.js")(app);
 require("./app/routes/user.routes.js")(app);
 require("./app/routes/auth.routes")(app);
 require("./app/routes/test.routes.js")(app);
+require("./app/routes/product.routes.js")(app);
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
