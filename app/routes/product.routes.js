@@ -1,4 +1,8 @@
+const express = require("express");
 const products = require("../controllers/product.controller");
+const router = require("express").Router();
+const uploadImageMiddleware = require("../middlewares/uploadMiddleware");
+const sortMiddleware = require("../middlewares/sort.middleware");
 
 module.exports = (app) => {
   app.use(function (req, res, next) {
@@ -8,13 +12,12 @@ module.exports = (app) => {
     );
     next();
   });
-  var router = require("express").Router();
 
   // Create a new product/signup product
-  router.post("/create", products.create);
+  router.post("/create", uploadImageMiddleware, products.create);
 
   // Retrieve all products
-  router.get("/", products.getAllProducts);
+  router.get("/", sortMiddleware, products.getAllProducts);
 
   // Retrieve a single product with id
   router.get("/:id", products.findOne);

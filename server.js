@@ -2,7 +2,7 @@
 // require("dotenv").config();
 // express
 const express = require("express");
-// const bodyParser = require("body-parser");
+const bodyParser = require("body-parser");
 const multer = require("multer");
 const app = express();
 
@@ -19,7 +19,7 @@ require("./app/routes/user.routes.js")(app);
 require("./app/routes/auth.routes")(app);
 require("./app/routes/test.routes.js")(app);
 require("./app/routes/product.routes.js")(app);
-require("./app/routes/upload.routes.js")(app);
+// require("./app/routes/upload.routes.js")(app);
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
