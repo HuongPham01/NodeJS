@@ -1,15 +1,32 @@
-const sql = require("./db.js");
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/db.config.js");
 
-// Constructor
-const Product = function (product) {
-  this.name = product.name;
-  this.description = product.description;
-  this.size = product.size;
-  this.color = product.color;
-  this.price = product.price;
-  this.quantity = product.quantity;
-  this.image_path = product.image_path;
-};
+const Product = sequelize.define("Product", {
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  description: {
+    type: DataTypes.STRING,
+  },
+  size: {
+    type: DataTypes.STRING,
+  },
+  color: {
+    type: DataTypes.STRING,
+  },
+  price: {
+    type: DataTypes.DECIMAL, // Adjust precision and scale as needed
+    allowNull: false,
+  },
+  quantity: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  image_path: {
+    type: DataTypes.STRING,
+  },
+});
 
 //Create Product
 
@@ -81,7 +98,7 @@ Product.findById = (id, result) => {
   });
 };
 
-// Pagination
+// Pagination and getAll
 Product.getAllAndPaginate = (options, result) => {
   let query = "SELECT * FROM products";
 
@@ -116,37 +133,6 @@ Product.getAll = (result) => {
     result(null, res);
   });
 };
-
-//GetAll
-// Product.getAll = (callback, sortOrder = "asc") => {
-//   const productQuery = "SELECT * FROM products";
-
-//   sql.query(productQuery, (productErr, productRes) => {
-//     if (productErr) {
-//       callback(productErr, null);
-//       return;
-//     }
-
-//     let sortedProducts = [...productRes];
-
-//     if (isValidSortOrder(sortOrder)) {
-//       sortedProducts.sort((a, b) => {
-//         return sortOrder.toLowerCase() === "desc"
-//           ? a.price - b.price
-//           : b.price - a.price;
-//       });
-//     } else {
-//       console.error("Invalid sortOrder. Defaulting to ascending order.");
-//     }
-
-//     callback(null, sortedProducts);
-//   });
-// };
-
-// const isValidSortOrder = (sortOrder) => {
-//   const validOrders = ["asc", "desc"];
-//   return validOrders.includes(sortOrder.toLowerCase());
-// };
 
 //Delete by Id
 Product.remove = (id, result) => {
@@ -200,22 +186,5 @@ Product.updateById = (id, product, result) => {
     }
   );
 };
-
-// sort price
-// exports.sort_price = (req, res) => {
-//   const budget = (req.query.budget || "asc").toLowerCase(); // Default to ascending order
-
-//   // Sort products based on the budget parameter
-//   const sortedProducts = [...products].sort((a, b) => {
-//     if (budget === "asc") {
-//       return a.price - b.price;
-//     } else if (budget === "desc") {
-//       return b.price - a.price;
-//     }
-//   });
-
-//   console.log(sortedProducts);
-//   res.json(sortedProducts);
-// };
 
 module.exports = Product;
