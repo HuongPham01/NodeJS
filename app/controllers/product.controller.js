@@ -1,5 +1,6 @@
 const Product = require("../models/product.model.js");
 
+//Create Product
 exports.create = async (req, res, next) => {
   console.log(req.file);
   try {
@@ -34,6 +35,7 @@ exports.create = async (req, res, next) => {
   }
 };
 
+//GetAll
 exports.getAllProducts = async (req, res) => {
   try {
     // Check if sorting or filtering parameters are present
@@ -86,6 +88,32 @@ exports.getAllProducts = async (req, res) => {
     }
   } catch (error) {
     console.error("Error retrieving or sorting/filtering products:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// SEARCH BY NAME
+exports.searchByName = async (req, res) => {
+  try {
+    const searchTerm = req.query.name;
+
+    if (!searchTerm) {
+      return res.status(400).json({
+        status: false,
+        data: [],
+        message: "Search term (name) is required.",
+      });
+    }
+
+    const result = await Product.searchByName(searchTerm);
+
+    res.status(200).json({
+      status: true,
+      data: result,
+      message: "Search results for product names matching the provided term.",
+    });
+  } catch (error) {
+    console.error("Error in product name search:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

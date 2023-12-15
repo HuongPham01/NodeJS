@@ -18,6 +18,9 @@ module.exports = (app) => {
   // Retrieve all products
   router.get("/", products.getAllProducts);
 
+  // Search products by name
+  router.get("/search", products.searchByName);
+
   // Retrieve a single product with id
   router.get("/:id", products.findOne);
 

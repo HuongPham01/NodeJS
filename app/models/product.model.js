@@ -1,5 +1,6 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db.config1.js");
+const { Op } = require("sequelize");
 
 const Product = sequelize.define(
   "Product",
@@ -138,14 +139,14 @@ Product.sortAndFilterProducts = async (sortOptions, filterOptions) => {
     const filterCriteria = {};
 
     // Build the filter criteria based on the presence of each parameter
-    if (filterOptions.name) {
-      filterCriteria.name = filterOptions.name;
+    if (filterOptions.name !== undefined && filterOptions.name !== null) {
+      filterCriteria.name = { [Op.like]: `%${filterOptions.name}%` };
     }
-    if (filterOptions.size) {
-      filterCriteria.size = filterOptions.size;
+    if (filterOptions.size !== undefined && filterOptions.size !== null) {
+      filterCriteria.size = { [Op.like]: `%${filterOptions.size}%` };
     }
-    if (filterOptions.color) {
-      filterCriteria.color = filterOptions.color;
+    if (filterOptions.color !== undefined && filterOptions.color !== null) {
+      filterCriteria.color = { [Op.like]: `%${filterOptions.color}%` };
     }
     // Add other filtering criteria as needed
 
@@ -162,6 +163,24 @@ Product.sortAndFilterProducts = async (sortOptions, filterOptions) => {
     return products;
   } catch (error) {
     console.error("Error sorting and filtering products: ", error.message);
+    throw error;
+  }
+};
+
+// Existing code for defining the Product model
+Product.searchByName = async (searchTerm) => {
+  try {
+    const products = await Product.findAll({
+      where: {
+        name: {
+          [Op.like]: `%${searchTerm}%`,
+        },
+      },
+    });
+
+    return products;
+  } catch (error) {
+    console.error("Error searching products by name:", error.message);
     throw error;
   }
 };
