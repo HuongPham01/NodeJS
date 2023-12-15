@@ -1,13 +1,7 @@
-const { Sequelize } = require("sequelize");
-var sequelize = new Sequelize("myproject", "username", "password", {
-  host: "localhost",
-  dialect: "mysql" | "mariadb" | "sqlite" | "postgres" | "mssql",
-
-  pool: {
-    max: 5,
-    min: 0,
-    idle: 10000,
-  },
-
-  storage: "path/to/database.sqlite", // Chỉ dùng khi MS là SQLite
-});
+module.exports = {
+  HOST: "127.0.0.1",
+  USER: "root",
+  PASSWORD: "123456",
+  DB: "myProject",
+  PORT: 3306,
+};

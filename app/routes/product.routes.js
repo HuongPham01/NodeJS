@@ -2,8 +2,6 @@ const express = require("express");
 const products = require("../controllers/product.controller");
 const router = require("express").Router();
 const uploadImageMiddleware = require("../middlewares/uploadMiddleware");
-const sortMiddleware = require("../middlewares/sort.middleware");
-const filterMiddleware = require("../middlewares/filter.middleware");
 
 module.exports = (app) => {
   app.use(function (req, res, next) {
@@ -18,8 +16,7 @@ module.exports = (app) => {
   router.post("/create", uploadImageMiddleware, products.create);
 
   // Retrieve all products
-  router.get("/filter", filterMiddleware, products.getAllProducts);
-  router.get("/sort", sortMiddleware, products.getAllProducts);
+  router.get("/", products.getAllProducts);
 
   // Retrieve a single product with id
   router.get("/:id", products.findOne);

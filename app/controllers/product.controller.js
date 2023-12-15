@@ -1,5 +1,4 @@
 const Product = require("../models/product.model.js");
-const fs = require("fs");
 
 exports.create = async (req, res, next) => {
   console.log(req.file);
@@ -15,33 +14,19 @@ exports.create = async (req, res, next) => {
       color,
       price: parseFloat(price),
       quantity: parseInt(quantity, 10),
-      image_path: image_path,
+      image_path,
     });
 
-    // Save the new product to the database
-    Product.create(newProduct, image_path, (err, createdProduct) => {
-      if (err) {
-        console.error("Error creating product:", err);
-        return res.status(500).json({
-          status: false,
-          data: [],
-          message: "Sản phẩm này đã tồn tại. Vui lòng tạo mới!",
-        });
-      }
+    const createdProduct = await Product.createProduct(newProduct, image_path);
 
-      // Attach the product instance to the request object
-      req.product = createdProduct;
-
-      // Send a response with the created product details
-      res.status(200).json({
-        status: true,
-        data: [newProduct],
-        message: "Create success!!!",
-      });
+    res.status(201).json({
+      status: true,
+      data: [createdProduct],
+      message: "Create success!!!",
     });
   } catch (error) {
     console.error("Error creating product:", error);
-    res.status(400).json({
+    res.status(500).json({
       status: false,
       data: [],
       message: "Create fail!!!",
@@ -51,114 +36,115 @@ exports.create = async (req, res, next) => {
 
 exports.getAllProducts = async (req, res) => {
   try {
-    if (req.query.page || req.query.limit) {
-      // If pagination parameters are present
-      const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 5;
-      const offset = (page - 1) * limit; // vị trí lấy phần tử của trang thứ page và giới hạn là limit
+    // Check if sorting or filtering parameters are present
+    const hasSortOrFilterParams =
+      req.query.sortBy ||
+      req.query.sortDirection ||
+      req.query.name ||
+      req.query.size ||
+      req.query.color;
+    // req.query.brand;
 
-      Product.getAllAndPaginate({ limit, offset }, (err, products) => {
-        if (err) {
-          res.status(500).json({
-            message: err.message || "Internal Server Error",
-          });
-        } else {
-          console.log(`Page: ${page}, Limit: ${limit}, Offset: ${offset}`);
-          res.json({ products, page, limit });
-        }
-      });
+    if (hasSortOrFilterParams) {
+      // Sorting and/or filtering requested
+      const sortOptions = {
+        sortBy: req.query.sortBy,
+        sortDirection: req.query.sortDirection,
+      };
+
+      const filterOptions = {
+        name: req.query.name,
+        size: req.query.size,
+        color: req.query.color,
+        // brand: req.query.brand,
+      };
+
+      // Call the sortAndFilterProducts method from the Product model
+      const result = await Product.sortAndFilterProducts(
+        sortOptions,
+        filterOptions
+      );
+
+      // Send the result as JSON response
+      res.status(200).json(result);
     } else {
-      // If no pagination parameters, retrieve all products
-      Product.getAll((err, data) => {
-        if (err) {
-          res.status(500).send({
-            message:
-              err.message || "Some error occurred while retrieving Products.",
-          });
-        } else {
-          res.send(data);
-        }
-      });
+      // No sorting or filtering parameters, retrieve all products
+
+      if (req.query.page || req.query.limit) {
+        // If pagination parameters are present
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 5;
+        const offset = (page - 1) * limit;
+
+        const products = await Product.getAllAndPaginate({ limit, offset });
+
+        res.json({ products, page, limit });
+      } else {
+        const products = await Product.getAll();
+        res.json(products);
+      }
     }
   } catch (error) {
-    console.error("Error retrieving products:", error);
+    console.error("Error retrieving or sorting/filtering products:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
 // Find a Product by Id
-exports.findOne = (req, res) => {
-  Product.findById(req.params.id, (err, data) => {
-    if (err) {
-      console.error("Error retrieving product:", err);
-      if (err.kind === "not_found") {
-        res.status(404).send({
-          message: `Not found Product with id ${req.params.id}.`,
-        });
-      } else {
-        res.status(500).send({
-          message: `Error retrieving Product with id ${req.params.id}.`,
-          error: err.message,
-        });
-      }
-    }
-    if (!data) {
-      return res.status(404).send({
+exports.findOne = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    res.json(product);
+  } catch (error) {
+    console.error("Error retrieving product:", error);
+    if (error.kind === "not_found") {
+      res.status(404).json({
         message: `Not found Product with id ${req.params.id}.`,
       });
+    } else {
+      res.status(500).json({
+        message: `Error retrieving Product with id ${req.params.id}.`,
+        error: error.message,
+      });
     }
-    console.log(req.params.id);
-    res.send(data);
-  });
-};
-
-// Delete a Product with the specified id in the request
-exports.delete = (req, res) => {
-  Product.remove(req.params.id, (err, data) => {
-    if (err) {
-      if (err.kind === "not_found") {
-        res.status(404).send({
-          message: `Not found Product with id ${req.params.id}.`,
-        });
-      } else {
-        res.status(500).send({
-          message: "Could not delete Product with id " + req.params.id,
-        });
-      }
-    } else res.send({ message: `Product was deleted successfully!` });
-  });
-};
-
-// Update a Product
-exports.update = (req, res) => {
-  // Validate Request
-  // if (!req.body) {
-  //   res.status(400).send({
-  //     message: "Content can not be empty!",
-  //   });
-  // }
-
-  if (!req.body || Object.keys(req.body).length === 0) {
-    return res.status(400).json({
-      message: "Content can not be empty!",
-    });
   }
+};
 
-  console.log(req.body);
+// Delete by Id
+exports.delete = async (req, res) => {
+  try {
+    await Product.remove(req.params.id);
+    res.json({ message: `Product was deleted successfully!` });
+  } catch (error) {
+    if (error.kind === "not_found") {
+      res.status(404).json({
+        message: `Not found Product with id ${req.params.id}.`,
+      });
+    } else {
+      res.status(500).json({
+        message: `Could not delete Product with id ${req.params.id}`,
+      });
+    }
+  }
+};
 
-  Product.updateById(req.params.id, new Product(req.body), (err, data) => {
-    if (err) {
-      if (err.kind === "not_found") {
-        res.status(404).send({
-          message: `Not found Product with id ${req.params.id}.`,
-        });
-      } else {
-        console.error("Error updating product:", err);
-        res.status(500).send({
-          message: `Error updating Product with id ${req.params.id}.`,
-          error: err.message,
-        });
-      }
-    } else res.send(data);
-  });
+// Update
+exports.update = async (req, res) => {
+  try {
+    const updatedProduct = new Product(req.body);
+    const result = await Product.updateById(req.params.id, updatedProduct);
+    res.json(result);
+  } catch (error) {
+    if (error.kind === "not_found") {
+      res.status(404).json({
+        message: `Not found Product with id ${req.params.id}.`,
+      });
+    } else {
+      console.error("Error updating product:", error);
+      res.status(500).json({
+        message: `Error updating Product with id ${req.params.id}.`,
+        error: error.message,
+      });
+    }
+  }
 };
